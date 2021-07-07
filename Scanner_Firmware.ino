@@ -23,19 +23,18 @@
 unsigned int sensor_type = 0; // Parameterization from app - MEMSAVE: byte
 unsigned int scan_angle = 0; // Parameterization from app
 float scan_resolution = 0; // Parameterization from app
+// Scanner angle limits
+//  Angle phi is measured downwards from the zenith, relative to the vertical axis of the scanner
+//  Straight up (Zenith) -> 0°   Straight down (Nadir) -> 180°
+//  Max vertical (highside_angle): 0, but realistically should be 15 degrees.
+//  Min vertical (lowside_angle): 150, limited by scanner body.
+unsigned int highside_angle = 20;  // Parameterization from app
+unsigned int lowside_angle = 135;  // Parameterization from app
+unsigned int scan_point_trimming = 0;  // Parameterization from app
 unsigned int scan_data_validation = 0; // Parameterization from app
-// TODO: Make point interpolation come from the application!
-bool scan_point_trimming = true;  // Parameterization from app
-// Scanner data
+// Scanner data collection
 unsigned int distance = 0; // Distance will be used by either sensor type, and takes the same form in memory.
 unsigned int intensity = 0; // Strength will be used exclusively by the LiDAR, both TF02 Pro and TFMini
-// Scanner angle limits
-// Angle phi is measured downwards from the zenith, relative to the vertical axis of the scanner
-// Straight up (Zenith) -> 0°   Straight down (Nadir) -> 180°
-// Max vertical (highside_angle): 0, but realistically should be 15 degrees.
-// Min vertical (lowside_angle): 150, limited by scanner body.
-unsigned int highside_angle = 20;
-unsigned int lowside_angle = 135;
 // Scan statistics and flags
 bool scan_complete = false;  // Flag for scan completion status
 bool scanner_configured = false;  // Flag for scanner successful configuration
@@ -138,7 +137,8 @@ void codeAConfigure(){
   }
   // We've configured successfully, proceed to scan. Set the serial timeout to match the application.
   Serial.setTimeout(500);
-  // sensor_type 0 -> SONAR      1 -> LiDAR
+  // sensor_type 0 -> SONAR
+  //             1 -> LiDAR
   switch(sensor_type){
     case 0: // Sonar
       pinMode(2,INPUT);
@@ -164,7 +164,7 @@ void codeAConfigure(){
       delay(10);  // Wait minimum time for LiDAR response
       break;
   }
-  // TODO: With point trimming, how many do we expect to yield?
+  // Calculate the number of points we should be scanning
   if(scan_point_trimming){
     unsigned long point_count_lines = 0;
     unsigned int longitude_lines_in_scan = (unsigned int)(scan_angle*scan_resolution);
@@ -193,6 +193,7 @@ void codeAConfigure(){
         break;
     }
   }
+  // If point trimming is disabled, multiply the full line of longitude with the horizontal scan angle.
   else{
     anticipated_points = ((lowside_angle-highside_angle)*scan_resolution)*(scan_angle*scan_resolution);
   }
@@ -205,7 +206,7 @@ bool getConfiguration(){
    *  If data has an invalid parameter, pass back false
    */
   String sensor_string = "", angle_string = "", hiangle_string = "";
-  String loangle_string = "", resolution_string = "", valid_string = "";
+  String loangle_string = "", resolution_string = "", valid_string = "", trim_string = "";
   // Set the serial timeout to be very long to allow for potential manual configuration
   // Get configuration data from the application
   // Leave 10ms in between reads to give time for the serial buffer to fill
@@ -221,6 +222,8 @@ bool getConfiguration(){
   resolution_string = Serial.readStringUntil('\n');
   delay(10);
   valid_string = Serial.readStringUntil('\n');
+  delay(10);
+  trim_string = Serial.readStringUntil('\n');
   Serial.setTimeout(1000);
   // Use string methods to pull configuration data from transmission
   sensor_type = (unsigned int)sensor_string.toInt();
@@ -228,7 +231,9 @@ bool getConfiguration(){
   highside_angle = (unsigned int)hiangle_string.toInt();
   lowside_angle = (unsigned int)loangle_string.toInt();
   scan_resolution = (float)resolution_string.toFloat();
+  scan_point_trimming = (unsigned int)trim_string.toInt();
   scan_data_validation = (unsigned int)valid_string.toInt();
+  
   // Make sure we've changed at least one parameter
   if((scan_angle==0)){
     return false;
@@ -250,7 +255,8 @@ bool confirmScan(){
     + String(scan_angle) + ','
     + String(highside_angle) + ','
     + String(lowside_angle) + ','
-    + String(scan_data_validation));
+    + String(scan_data_validation) + ','
+    + String(scan_point_trimming));
   Serial.println(frame);
   // Set serial timeout long for potential manual configuration
   Serial.setTimeout(10000);
@@ -540,7 +546,7 @@ bool readSonar(){
 bool scanPoint(){
   // Take the current vertical position and return whether or not to measure a point based on scanner line.
   unsigned int comparison_high_angle = 0, comparison_low_angle = 0;
-  // If point interpolation is disabled, scan every single point.
+  // If point trimming is disabled, scan every single point.
   if(!scan_point_trimming){
     return true;
   }

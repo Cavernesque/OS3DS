@@ -89,18 +89,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # Initialize the com ports available to connect to
         self.refcomButton.clicked.connect(self.getSerialPorts)
-        # Connect the scan angle combo box to the logic that will enable
-        # the custom dimension boxes
-        self.roomsizeBox.currentIndexChanged.connect(self.checkScanAngleCustom)
 
         # Connect all combo boxes to the logic that calculates scan time
         # and number of scan points
         self.angleBox.activated.connect(self.calcScanProperties)
-        # TODO: Implement algorithm that adapts room size property
-        # self.roomsizeBox.activated.connect(self.calcScanProperties)
-        # self.lengthBox.valueChanged.connect(self.calcScanProperties)
-        # self.widthBox.valueChanged.connect(self.calcScanProperties)
-        # self.heightBox.valueChanged.connect(self.calcScanProperties)
         self.resolutionBox.activated.connect(self.calcScanProperties)
 
         # Connect the browse for filename button to an open filename dialog
@@ -146,21 +138,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "Scanner Configuration Files (*.3dscancfg);;All Files (*)",
             options=options)
         if fileName != '':
-            fh = open(fileName, "r")
-            try:
+            with open(fileName, "r") as fh:
                 data = fh.readline()
                 data = data.split(",")
                 self.sensorBox.setCurrentIndex(int(data[0]))
                 self.angleBox.setCurrentIndex(int(data[1]))
-                self.roomsizeBox.setCurrentIndex(int(data[2]))
-                self.lengthBox.setValue(float(data[3]))
-                self.widthBox.setValue(float(data[4]))
-                self.heightBox.setValue(float(data[5]))
-                self.resolutionBox.setCurrentIndex(int(data[6]))
-                self.datavalidationBox.setChecked(bool(data[7]))
-            finally:
-                fh.close()
-                self.calcScanProperties()
+                self.highAngleBox.setValue(int(data[2]))
+                self.lowAngleBox.setValue(int(data[3]))
+                self.resolutionBox.setCurrentIndex(int(data[4]))
+                self.datavalidationBox.setChecked(bool(data[5]))
+                self.pointtrimmingBox.setChecked(bool(data[6]))
+            self.calcScanProperties()
 
     def saveSettings(self):
         """Save current settings for the application to a CSV file.
@@ -176,18 +164,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             "Scanner Configuration Files (*.3dscancfg);;All Files (*)",
             options=options)
         if fileName != '':
-            try:
-                fh = open(fileName, "w")
+            with open(fileName, "w") as fh:
                 fh.write(repr(self.sensorBox.currentIndex()) + ",")
                 fh.write(repr(self.angleBox.currentIndex()) + ",")
-                fh.write(repr(self.roomsizeBox.currentIndex()) + ",")
-                fh.write(repr(self.lengthBox.value()) + ",")
-                fh.write(repr(self.widthBox.value()) + ",")
-                fh.write(repr(self.heightBox.value()) + ",")
+                fh.write(repr(self.highAngleBox.value()) + ",")
+                fh.write(repr(self.lowAngleBox.value()) + ",")
                 fh.write(repr(self.resolutionBox.currentIndex()) + ",")
                 fh.write(repr(self.datavalidationBox.isChecked()))
-            finally:
-                fh.close()
+                fh.write(repr(self.pointtrimmingBox.isChecked()))
 
     def aboutDialog(self):
         """Open the About dialog box.
@@ -226,61 +210,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for port in ports:
             self.comBox.addItem(port.device)
 
-    def checkScanAngleCustom(self):
-        """Enable the custom scan dimensions comboboxes.
-
-        Returns
-        -------
-        None.
-
-        """
-        if self.roomsizeBox.currentIndex() == 0:
-            self.setBoxVal(3.00)
-        if self.roomsizeBox.currentIndex() == 1:
-            self.setBoxVal(5.00)
-        if self.roomsizeBox.currentIndex() == 2:
-            self.setBoxVal(10.00)
-        if self.roomsizeBox.currentIndex() == 3:
-            self.setBoxVal(40.00)
-        if self.roomsizeBox.currentIndex() == 4:
-            self.setBoxEnbl(True)
-            self.setBoxVal(1.00)
-        else:
-            self.setBoxEnbl(False)
-
-    def setBoxVal(self, value):
-        """Set the current value of the dimension comboboxes.
-
-        Parameters
-        ----------
-        value : Float
-
-        Returns
-        -------
-        None.
-        """
-        self.lengthBox.setValue(value)
-        self.widthBox.setValue(value)
-        self.heightBox.setValue(value)
-
-    def setBoxEnbl(self, value):
-        """Set the enable property of the dimension comboboxes.
-
-        Parameters
-        ----------
-        value : Boolean
-            True -> Enabled
-            False -> Disabled
-
-        Returns
-        -------
-        None.
-
-        """
-        self.lengthBox.setEnabled(value)
-        self.widthBox.setEnabled(value)
-        self.heightBox.setEnabled(value)
-
     def calcScanProperties(self):
         """Change the value of both the scan time and scan points labels.
 
@@ -289,17 +218,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         None.
 
         """
+        # TODO: Re-time the position change time with the reduced duty cycle
         pos_change_time = 0.125  # Time is in seconds
-        # TODO: vertical_angle should be automatically grabbed from Arduino
-        #       Or sent as a parameter.
-        #       Perhaps an "advanced settings" dialog?
-        vertical_angle = 115  # lowside_angle - highside_angle in Arduino
+        vertical_angle = self.lowAngleBox.value() - self.highAngleBox.value()
         scan_angles = [360, 270, 180, 135, 90, 45, 22, 10]
         angle = scan_angles[self.angleBox.currentIndex()]
         resolution = self.resolution_options[self.resolutionBox.currentIndex()]
         vert_res = round(vertical_angle*resolution)
         hor_res = round(angle*resolution)
         points = int(vert_res*hor_res)
+        # TODO: This estimate needs to be updated when trimming is fully done
         scan_time_estimate = round(points*pos_change_time/60, 2)
         self.scan_point_count = points
         self.scan_time_estimate = scan_time_estimate
@@ -361,8 +289,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.refcomButton.setEnabled(state)
         self.sensorBox.setEnabled(state)
         self.angleBox.setEnabled(state)
-        self.roomsizeBox.setEnabled(state)
-        self.checkScanAngleCustom()
+        self.highAngleBox.setEnabled(state)
+        self.lowAngleBox.setEnabled(state)
         self.resolutionBox.setEnabled(state)
         self.outputfileEdit.setEnabled(state)
         self.outputfileButton.setEnabled(state)
@@ -453,35 +381,37 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         """
         sensor = str(self.sensorBox.currentIndex())
-        angle = str(self.angleBox.currentText()[:-1])
+        horiz_angle = str(self.angleBox.currentText()[:-1])
+        vert_hi_angle = str(self.highAngleBox.value())
+        vert_lo_angle = str(self.lowAngleBox.value())
         # Ex Fine, Very Fine, Fine, Medium, Coarse, Very Coarse
         resolution = str(
             self.resolution_options[self.resolutionBox.currentIndex()])
         validate = str(int(self.datavalidationBox.isChecked()))
+        trimming = str(int(self.pointtrimmingBox.isChecked()))
         # Send configuration instruction code
         self.arduino.write(bytes("A", encoding="ASCII"))
         sleep(1)
         # Push the configuration to scanner
         self.arduino.write(bytes(sensor + '\n', encoding="ASCII"))
         sleep(0.01)
-        self.arduino.write(bytes(angle + '\n', encoding="ASCII"))
+        self.arduino.write(bytes(horiz_angle + '\n', encoding="ASCII"))
         sleep(0.01)
-        # Vertical angle parameters
-        # Highside angle
-        self.arduino.write(bytes("20\n", encoding="ASCII"))
+        self.arduino.write(bytes(vert_hi_angle + '\n', encoding="ASCII"))
         sleep(0.01)
-        # Lowside angle
-        self.arduino.write(bytes("135\n", encoding="ASCII"))
+        self.arduino.write(bytes(vert_lo_angle + '\n', encoding="ASCII"))
         sleep(0.01)
         self.arduino.write(bytes(resolution + '\n', encoding="ASCII"))
         sleep(0.01)
         self.arduino.write(bytes(validate + '\n', encoding="ASCII"))
         sleep(0.01)
+        self.arduino.write(bytes(trimming + '\n', encoding="ASCII"))
         total_bytes = (len(sensor)
-                       + len(angle)
-                       + 7  # 20,135,
+                       + len(horiz_angle)
+                       + len(vert_hi_angle)
+                       + len(vert_lo_angle)
                        + len(validate)
-                       + 2)  # /r/n
+                       + 6)  # commas and /r/n
         # Read the echo
         sleep(0.01)
         response = self.arduino.read(size=total_bytes)
@@ -490,9 +420,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         print("Configuration frame from scanner: " + repr(parsed))
         # If the response matches the transmission, give clearance for scan.
         # Don't check the resolution, floating point comparison is meaningless.
-        if((parsed[0] == sensor) and (parsed[1] == angle)
-            and (parsed[2] == "20") and (parsed[3] == "135")
-                and (parsed[4] == validate)):
+        if((parsed[0] == sensor) and (parsed[1] == horiz_angle)
+            and (parsed[2] == vert_hi_angle) and (parsed[3] == vert_lo_angle)
+                and (parsed[4] == validate) and (parsed[5] == trimming)):
             self.arduino.write(bytes("scan\n", "ascii"))
             print("Succesfully configured.")
             return True
@@ -551,6 +481,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         points_scanned = 0
         outstr = ""
         scan_complete = False
+        valid_fails = 0
         self.scan_start_time = datetime.now()
         fileName = self.outputfileEdit.toPlainText()
         # Open the file where the data will be stored during the scan.
@@ -574,12 +505,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 parsed = data.split(",")
                 if parsed[0] == "complete":
                     scan_complete = True
-                    # TODO: Add to output with other scan stats
-                    # !!! DEBUG
-                    print(
-                        "Number of failed transmissions: "
-                        + repr(parsed[1]))
-                    # !!! END DEBUG
+                    valid_fails = int(parsed[1])
                 else:
                     # TODO: Should be writing these values to an interim file
                     #       then getting them from that file
@@ -640,7 +566,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 QtWidgets.QApplication.processEvents()
         # Print the final message to the output
         tmp_file.close()
-        self.setScanResult(True, points=points_scanned)
+        self.setScanResult(True, points=points_scanned, failedpts=valid_fails)
         self.processAndExport(fileName, distance, intensity, theta, phi)
         return
 
@@ -648,8 +574,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """Set the abort scan flag."""
         self.abort_scan = True
 
-    def setScanResult(self, result_success=False,
-                      points=0, usr_abt=False, cfg=True):
+    def setScanResult(self, result_success=False, points=0, failedpts=0,
+                      usr_abt=False, cfg=True):
         """Update the form objects with scan progress and result.
 
         Will provide a feedback message with some basic scan statistics
@@ -684,6 +610,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                       + "----------------\n"
                       + str(points)
                       + " points collected.\n"
+                      + str(failedpts)
+                      + " points failed data validation.\n"
                       + "Scan time: "
                       + self.scan_completion_time
                       + "\nAn E57 file has been saved to the directory:\n"
@@ -695,7 +623,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.outputText.setText(
                 "SCAN COMPLETE.\n\n"
                 + scan_stats)
-        elif not result_success:
+        else:
             self.outputText.clear()
             self.progressBar.reset()
             if usr_abt:
@@ -717,9 +645,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     + "An unexpected communication error has occurred.\n"
                     + "The current scan data has been saved to file.\n\n"
                     + scan_stats)
-        self.settingsScanState(True)
-        # Since we've closed the connection to the Arduino, turn off jog mode
-        self.jogMode(False)
+        self.settingsScanState(True)  # Re-enable the settings
+        self.jogMode(False)  # Turn off jog mode
         QtWidgets.QApplication.processEvents()
 
     """
