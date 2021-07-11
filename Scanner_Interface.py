@@ -105,6 +105,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         # Set the scan information with preliminary settings
         self.calcScanProperties()
+        self.getSerialPorts()
 
         # Connect the jog buttons to the jog motor method
         self.jogscannerUp.clicked.connect(
@@ -218,8 +219,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         None.
 
         """
-        # TODO: Re-time the position change time with the reduced duty cycle
-        pos_change_time = 0.125  # Time is in seconds
+        pos_change_time = 0.0754  # Time is in seconds
         vertical_angle = self.lowAngleBox.value() - self.highAngleBox.value()
         scan_angles = [360, 270, 180, 135, 90, 45, 22, 10]
         angle = scan_angles[self.angleBox.currentIndex()]
@@ -228,6 +228,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         hor_res = round(angle*resolution)
         points = int(vert_res*hor_res)
         # TODO: This estimate needs to be updated when trimming is fully done
+        #       Potentially obtain from Arduino directly before scan
         scan_time_estimate = round(points*pos_change_time/60, 2)
         self.scan_point_count = points
         self.scan_time_estimate = scan_time_estimate
@@ -426,6 +427,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 and (parsed[4] == validate) and (parsed[5] == trimming)):
             self.arduino.write(bytes("scan\n", "ascii"))
             print("Succesfully configured.")
+            print("Homing...")
+            sleep(5)
             return True
         return False
 
@@ -571,7 +574,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.progressBar.setValue(progress)
                 # Update the application screen
                 # TODO: Should be in separate thread?
-                # QtWidgets.QApplication.processEvents()
+                QtWidgets.QApplication.processEvents()
         # Print the final message to the output
         tmp_file.close()
         self.setScanResult(True, points=points_scanned, failedpts=valid_fails)

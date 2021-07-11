@@ -53,8 +53,8 @@ const float vert_deg_steps = 5.6583; // 5.6583 steps per vertical degree (only s
 const int full_steps = 7342; // 7342 steps per full horizontal revolution of scanner
 float horiz_position = 0; // Initialize horizontal position tracking variable
 float vert_position = 90; // Initialize vertical position tracking variable, will be set during homingSequence
-bool vert_motor_direction = false; // Vertical motor direction: False is up, True is down
-byte stepper_motor_cycle_delay = 100; // A parameter so we don't over-work the steppers. TEST: See what operating range is.
+bool vert_motor_direction = true; // Vertical motor direction: False is up, True is down
+byte stepper_motor_cycle_delay = 10; // A parameter so we don't over-work the steppers. TEST: See what operating range is.
 
 // --LiDAR--
 // Default address of the LiDAR is 0x10 (DEC: 16)
@@ -90,7 +90,7 @@ void setup() {
   horiz_Stepper->setSpeed(10);  // TEST: Change to 15 rpm?
   vert_Stepper->setSpeed(10);  // TEST: Change to 15 rpm?
   // Set pins for limit switch and sonar serial connection
-  pinMode(limit_pin, INPUT);
+  pinMode(limit_pin, INPUT_PULLUP);
   pinMode(2, INPUT);
   pinMode(3, OUTPUT);
 }
@@ -197,7 +197,7 @@ void codeAConfigure(){
   else{
     anticipated_points = ((lowside_angle-highside_angle)*scan_resolution)*(scan_angle*scan_resolution);
   }
-  // homingSequence();
+  homingSequence();
 }
 
 bool getConfiguration(){
@@ -277,17 +277,17 @@ void homingSequence(){
   // Rotate CCW until the limit switch activates
   // Once limit switch is hit, move CW to the highest possible scan angle
   bool limit_state = false;
-  // limit_pin is HIGH when switch is closed
+  // limit_pin is HIGH when switch is closed and closed to ground
   limit_state = digitalRead(limit_pin);
   // Increment the motor 1 degree in the FORWARD direction until we close the limit switch
   while(!limit_state){
-    vert_Stepper->step(5,FORWARD,SINGLE);  // TEST: Change to smaller step value
-    delay(20);  // TEST: Change to smallest value possible, based on duty cycle
+    vert_Stepper->step(20,BACKWARD,SINGLE);  // TEST: Change to smaller step value
+    delay(stepper_motor_cycle_delay);  // TEST: Change to smallest value possible, based on duty cycle
     limit_state = digitalRead(limit_pin);
   }
   // Limit switch reached, go BACKWARD (increase phi) to top vertical angle
   int init_pos_steps = vert_deg_steps*highside_angle;  // TEST: Angle that scanner reaches after taking the steps
-  vert_Stepper->step(init_pos_steps,BACKWARD,SINGLE);
+  vert_Stepper->step(init_pos_steps,FORWARD,SINGLE);
   vert_position = highside_angle;
 }
 
