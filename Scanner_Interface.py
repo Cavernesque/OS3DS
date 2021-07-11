@@ -509,6 +509,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if parsed[0] == "complete":
                     scan_complete = True
                     valid_fails = int(parsed[1])
+                elif(parsed[0] == "0" and parsed[1] == "0"
+                        and parsed[2] == "0" and parsed[3] == "0"
+                        and parsed[4] == "0"):
+                    pass
                 else:
                     # TODO: Should be writing these values to an interim file
                     #       then getting them from that file

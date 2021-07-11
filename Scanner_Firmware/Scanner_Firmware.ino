@@ -327,11 +327,13 @@ void codeCScan(){
   // Loop until we have enough points to satisfy the scan.
   while(!scan_complete){
     bool data_state = false;
+    bool scan_the_point = false;
     // ----------------------------------
     // Gather data from configured sensor
     // ----------------------------------
     // If point interpolation enabled, check if we need to measure a point at the current scanner position.
-    if(scanPoint()){
+    scan_the_point = scanPoint();
+    if(scan_the_point){
       // LiDAR routine
       if((sensor_type) && (!scan_complete)){
         data_state = readLidar();
@@ -378,6 +380,13 @@ void codeCScan(){
       Serial.print(vert_position);
       Serial.print(',');
       Serial.print(checksum);
+      Serial.print('\r');
+      Serial.print('\n');
+    }
+    else
+    {
+      Serial.print("0,0,0,0,0");
+      Serial.print('\r');
       Serial.print('\n');
     }
     // Check to see if the scan has completed, set the flag if it is.
@@ -552,19 +561,20 @@ bool scanPoint(){
     return true;
   }
   // Set the angle limits for point interpolation.
+  comparison_low_angle = lowside_angle;
   if((scanner_current_line % 8)== 0)
   {
     comparison_high_angle = highside_angle;
   }
   else if((scanner_current_line % 4)== 0)
   {
-    comparison_high_angle = max(highside_angle,7.2);
+    comparison_high_angle = max(highside_angle,7);
   }
   else if((scanner_current_line % 2)== 0)
   {
-    comparison_high_angle = max(highside_angle,14.5);
+    comparison_high_angle = max(highside_angle,14);
   }
-  else if((scanner_current_line % 1)== 0)
+  else
   {
     comparison_high_angle = max(highside_angle,30);
   }
