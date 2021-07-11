@@ -411,7 +411,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                        + len(vert_hi_angle)
                        + len(vert_lo_angle)
                        + len(validate)
-                       + 6)  # commas and /r/n
+                       + len(trimming)
+                       + 5)  # commas and trim /r/n
         # Read the echo
         sleep(0.01)
         response = self.arduino.read(size=total_bytes)
@@ -485,7 +486,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.scan_start_time = datetime.now()
         fileName = self.outputfileEdit.toPlainText()
         # Open the file where the data will be stored during the scan.
-        tmp_file = open("scandata.txt", mode='w', encoding='utf-8')
+        tmp_file = open(
+            (fileName[:-4] + "_scandata.txt"), mode='w', encoding='utf-8')
         # Send the configuration data to the Arduino
         # On failure, cancel scan
         scanner_configured = self.sendConfiguration()
@@ -503,6 +505,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 # Strip CRLF
                 data = data.decode('utf8')[:-2]
                 parsed = data.split(",")
+                print(repr(parsed))
                 if parsed[0] == "complete":
                     scan_complete = True
                     valid_fails = int(parsed[1])
@@ -526,7 +529,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     points_scanned += 1
                     # Write the scan data we received to a file
                     # to preserve it in case of scanner failure
-                    tmp_file.write(parsed[:-1] + '\n')
+                    tmp_file.write(repr(parsed[:-1]) + '\n')
             # If at any point, a serial exception is generated, abort the scan
             # This operation will preserve any scan data acquired
             except serial.SerialException:
@@ -537,6 +540,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 return
             # If the serial connection times out, keep trying
             except serial.SerialTimeoutException:
+                print("Timeout!")
                 pass
             # Arduino passed bad data, set at origin
             except ValueError:
@@ -563,7 +567,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.progressBar.setValue(progress)
                 # Update the application screen
                 # TODO: Should be in separate thread?
-                QtWidgets.QApplication.processEvents()
+                # QtWidgets.QApplication.processEvents()
         # Print the final message to the output
         tmp_file.close()
         self.setScanResult(True, points=points_scanned, failedpts=valid_fails)

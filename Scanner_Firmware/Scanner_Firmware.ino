@@ -197,7 +197,7 @@ void codeAConfigure(){
   else{
     anticipated_points = ((lowside_angle-highside_angle)*scan_resolution)*(scan_angle*scan_resolution);
   }
-  homingSequence();
+  // homingSequence();
 }
 
 bool getConfiguration(){
@@ -377,7 +377,8 @@ void codeCScan(){
       Serial.print(',');
       Serial.print(vert_position);
       Serial.print(',');
-      Serial.println(checksum);
+      Serial.print(checksum);
+      Serial.print('\n');
     }
     // Check to see if the scan has completed, set the flag if it is.
     if(scan_points_acquired >= anticipated_points){
@@ -429,7 +430,7 @@ void moveScanner(){
       horiz_position = 0;
     }
     // Cycle the scanner line around the pattern
-    if(scanner_current_line >= 6){
+    if(scanner_current_line >= 8){
       scanner_current_line = 1;
     }
     else{
@@ -551,35 +552,25 @@ bool scanPoint(){
     return true;
   }
   // Set the angle limits for point interpolation.
-  switch(scanner_current_line){
-    case 1:  // Scan every available point
-      comparison_high_angle = highside_angle;
-      comparison_low_angle = lowside_angle;
-      break;
-    case 2:  // Limit between 45-135
-      comparison_high_angle = 45;
-      comparison_low_angle = 135;
-      break;
-    case 3:  // Limit between 30-150
-      comparison_high_angle = 30;
-      comparison_low_angle = 150;
-      break;
-    case 4:  // Limit between 45-135
-      comparison_high_angle = 45;
-      comparison_low_angle = 135;
-      break;
-    case 5:  // Limit between 30-150
-      comparison_high_angle = 30;
-      comparison_low_angle = 150;
-      break;
-    case 6:  // Limit between 45-135
-      comparison_high_angle = 45;
-      comparison_low_angle = 135;
-      break;
+  if((scanner_current_line % 8)== 0)
+  {
+    comparison_high_angle = highside_angle;
+  }
+  else if((scanner_current_line % 4)== 0)
+  {
+    comparison_high_angle = max(highside_angle,7.2);
+  }
+  else if((scanner_current_line % 2)== 0)
+  {
+    comparison_high_angle = max(highside_angle,14.5);
+  }
+  else if((scanner_current_line % 1)== 0)
+  {
+    comparison_high_angle = max(highside_angle,30);
   }
   // If the scanner's current vertical position is within the range of angle where we want a point on this line
   // return true to the program
-  if((vert_position <= comparison_high_angle) && (vert_position >= comparison_low_angle)){
+  if((vert_position >= comparison_high_angle) && (vert_position <= comparison_low_angle)){
     return true;
   }
   else{
