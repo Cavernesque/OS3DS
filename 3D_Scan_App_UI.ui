@@ -1190,9 +1190,17 @@ p, li { white-space: pre-wrap; }
     <property name="title">
      <string>Help</string>
     </property>
+    <widget class="QMenu" name="menuAbout">
+     <property name="title">
+      <string>About...</string>
+     </property>
+     <addaction name="actionAbout_OS3DS"/>
+     <addaction name="actionAbout_Qt"/>
+    </widget>
     <addaction name="actionUser_s_Guide"/>
     <addaction name="separator"/>
-    <addaction name="actionAbout"/>
+    <addaction name="menuAbout"/>
+    <addaction name="actionLicense"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
@@ -1201,11 +1209,6 @@ p, li { white-space: pre-wrap; }
   <action name="actionUser_s_Guide">
    <property name="text">
     <string>User's Guide</string>
-   </property>
-  </action>
-  <action name="actionAbout">
-   <property name="text">
-    <string>About...</string>
    </property>
   </action>
   <action name="actionNew_Scan">
@@ -1236,6 +1239,21 @@ p, li { white-space: pre-wrap; }
   <action name="actionE57_export_settings">
    <property name="text">
     <string>E57 export settings...</string>
+   </property>
+  </action>
+  <action name="actionAbout_Qt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="actionAbout_OS3DS">
+   <property name="text">
+    <string>About OS3DS</string>
+   </property>
+  </action>
+  <action name="actionLicense">
+   <property name="text">
+    <string>License</string>
    </property>
   </action>
  </widget>

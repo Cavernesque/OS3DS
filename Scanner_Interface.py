@@ -85,9 +85,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionExit_2.triggered.connect(self.close)
         self.actionOpen_Settings_File.triggered.connect(self.loadSettings)
         self.actionSave_Settings_File.triggered.connect(self.saveSettings)
-        self.actionAbout.triggered.connect(self.aboutDialog)
+        self.actionAbout_OS3DS.triggered.connect(self.aboutDialog)
+        self.actionAbout_Qt.triggered.connect(self.aboutQtDialog)
+        self.actionLicense.triggered.connect(self.licenseDialog)
 
-        # Initialize the com ports available to connect to
+        # Initialize the com ports available to connect from OS
         self.refcomButton.clicked.connect(self.getSerialPorts)
 
         # Connect all combo boxes to the logic that calculates scan time
@@ -190,6 +192,42 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         QtWidgets.QMessageBox.about(
             self, "About the 3D Scanning Utility", mesg)
+
+    def aboutQtDialog(self):
+        """Open the aboutQt dialog box.
+
+        Returns
+        -------
+        None.
+
+        """
+        QtWidgets.QMessageBox.aboutQt(self)
+
+    def licenseDialog(self):
+        """Open the aboutQt dialog box.
+
+        Returns
+        -------
+        None.
+
+        """
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("LICENSE")
+        dialog.setWindowModality(2)
+        geometry = self.geometry()
+        geometry.setWidth(550)
+        geometry.setHeight(600)
+        dialog.setGeometry(geometry)
+        textarea = QtWidgets.QTextBrowser(dialog)
+        textarea.setGeometry(0, 0, 550, 600)
+        textarea.setFontPointSize(12)
+        with open("LICENSE") as lic:
+            lictext = lic.readlines()
+        for line in lictext:
+            textarea.append(line[:-1])
+        # TODO: Make license dialog scroll to top automatically
+        textarea.setVerticalScrollBar(QtWidgets.QScrollBar())
+        dialog.exec_()
 
     """
     --------------------------------------------------------------
