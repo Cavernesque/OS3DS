@@ -213,20 +213,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         dialog = QtWidgets.QDialog()
         dialog.setWindowTitle("LICENSE")
-        dialog.setWindowModality(2)
+        dialog.setWindowModality(1)
         geometry = self.geometry()
         geometry.setWidth(550)
-        geometry.setHeight(600)
+        geometry.setHeight(623)
         dialog.setGeometry(geometry)
         textarea = QtWidgets.QTextBrowser(dialog)
         textarea.setGeometry(0, 0, 550, 600)
         textarea.setFontPointSize(12)
         with open("LICENSE") as lic:
             lictext = lic.readlines()
-        for line in lictext:
-            textarea.append(line[:-1])
-        # TODO: Make license dialog scroll to top automatically
-        textarea.setVerticalScrollBar(QtWidgets.QScrollBar())
+        text = ''.join(lictext)
+        textarea.setText(text)
+        pb = QtWidgets.QPushButton("Okay", dialog)
+        pb.setGeometry(237, 600, 75, 23)
+        pb.setDefault(True)
+        pb.clicked.connect(
+            lambda: dialog.close())
         dialog.exec_()
 
     """
