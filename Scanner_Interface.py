@@ -185,10 +185,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         """
         mesg = """Open Source 3D Scanning Utility \n
-        This utility will allow you to connect to the OSS 3D Scanner, upload
+        This utility will allow you to connect to the OS-3D-Scanner, upload
         configurations, and then retrieve data from the scanner.\n
-        Developed by Darren Paetz, Matt Kantor, Dr. Philip Mees
-        MacEwan University, Edmonton, Alberta, Canada, 2021
+        This tool was developed by:
+        Darren Paetz, Matt Kantor, & Dr. Philip Mees
+        at MacEwan University, Edmonton, Alberta, Canada, 2021
+        with the generous support of MacEwan University's USRI Grant\n
+        Note:
+        The OS3DS is not intended to be used in part of a formal BIM creation.
+        We hope that it serves as a useful learning and visualization tool for
+        any and all people that are interested in the topology of spaces.
         """
         QtWidgets.QMessageBox.about(
             self, "About the 3D Scanning Utility", mesg)
@@ -614,7 +620,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     progress = int((points_scanned/self.scan_point_count)*100)
                     self.progressBar.setValue(progress)
                 # Update the application screen
-                # TODO: Should be in separate thread?
                 QtWidgets.QApplication.processEvents()
         # Print the final message to the output
         tmp_file.close()
@@ -783,11 +788,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             intensity = np.zeros_like(cartesianX, dtype="intc")
         cartesianInvalidState = np.zeros_like(cartesianX, dtype="intc")
         # Get the name for E57 file from app window
-        # If it's blank, set to default name
+        # If it's blank, set to the name created by timestamp and settings
         if self.e57NameEdit.toPlainText() != '':
             export_file_name = self.e57NameEdit.toPlainText()
         else:
-            export_file_name = "OS3DS Cloud"
+            export_file_name = fileName
         # Set the dictionary that we will pass to the writer
         data = {
             "cartesianInvalidState": cartesianInvalidState,
