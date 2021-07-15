@@ -394,6 +394,9 @@ void codeCScan(){
       scan_complete = true;
     }
   }
+  // Return to starting position after loop is finished, "anti-tangle"
+  horiz_Stepper->step((full_steps*(360/scan_angle)),BACKWARD,SINGLE); // Rotate horizontally clockwise
+  horiz_position = 0;
   // Scan is complete, pass control back to loop() and allow serial commands again.
   Serial.print("complete,");
   Serial.println(validation_fails);
@@ -428,16 +431,9 @@ void moveScanner(){
       break;
   }
   if((vert_position <= highside_angle) || (vert_position >= lowside_angle)){
-    if(horiz_position < scan_angle){
-      horiz_Stepper->step(prc_adj_horiz_step,FORWARD,SINGLE); // Rotate horizontally anti-clockwise
-      horiz_position += prc_adj_horiz_pos;
-      vert_motor_direction = !vert_motor_direction; // Flip the vertical motor direction
-    }
-    else{
-       // Return to starting position after loop is finished, "anti-tangle"
-      horiz_Stepper->step((full_steps*(360/scan_angle)),BACKWARD,SINGLE); // Rotate horizontally clockwise
-      horiz_position = 0;
-    }
+    horiz_Stepper->step(prc_adj_horiz_step,FORWARD,SINGLE); // Rotate horizontally anti-clockwise
+    horiz_position += prc_adj_horiz_pos;
+    vert_motor_direction = !vert_motor_direction; // Flip the vertical motor direction
     // Cycle the scanner line around the pattern
     if(scanner_current_line >= 8){
       scanner_current_line = 1;
