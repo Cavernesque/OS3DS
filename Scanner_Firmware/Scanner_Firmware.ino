@@ -283,7 +283,7 @@ void homingSequence(){
   while(!limit_state){
     vert_Stepper->step(20,BACKWARD,SINGLE);  // TEST: Change to smaller step value
     delay(stepper_motor_cycle_delay);  // TEST: Change to smallest value possible, based on duty cycle
-    limit_state = digitalRead(limit_pin);
+    limit_state = !digitalRead(limit_pin);
   }
   // Limit switch reached, go BACKWARD (increase phi) to top vertical angle
   int init_pos_steps = vert_deg_steps*highside_angle;  // TEST: Angle that scanner reaches after taking the steps
