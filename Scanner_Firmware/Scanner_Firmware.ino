@@ -278,16 +278,16 @@ void homingSequence(){
   // Once limit switch is hit, move CW to the highest possible scan angle
   bool limit_state = false;
   // limit_pin is HIGH when switch is closed and closed to ground
-  limit_state = digitalRead(limit_pin);
+  limit_state = !digitalRead(limit_pin);
   // Increment the motor 1 degree in the FORWARD direction until we close the limit switch
   while(!limit_state){
-    vert_Stepper->step(20,BACKWARD,SINGLE);  // TEST: Change to smaller step value
+    vert_Stepper->step(20,FORWARD,SINGLE);  // TEST: Change to smaller step value
     delay(stepper_motor_cycle_delay);  // TEST: Change to smallest value possible, based on duty cycle
     limit_state = !digitalRead(limit_pin);
   }
-  // Limit switch reached, go BACKWARD (increase phi) to top vertical angle
+  // Limit switch reached, go BACKWARD to top vertical angle
   int init_pos_steps = vert_deg_steps*highside_angle;  // TEST: Angle that scanner reaches after taking the steps
-  vert_Stepper->step(init_pos_steps,FORWARD,SINGLE);
+  vert_Stepper->step(init_pos_steps,BACKWARD,SINGLE);
   vert_position = highside_angle;
 }
 
@@ -305,10 +305,10 @@ void codeBJog(){
     // Each button press should correspond to 4 degrees of turn
     // TODO: This amount of steps should be configurable.
     case 117:  // 'u'
-      vert_Stepper->step(20,BACKWARD,SINGLE);
+      vert_Stepper->step(20,FORWARD,SINGLE);
       break;
     case 100:  // 'd'
-      vert_Stepper->step(20,FORWARD,SINGLE);
+      vert_Stepper->step(20,BACKWARD,SINGLE);
       break;
     case 108:  // 'l'
       horiz_Stepper->step(80,FORWARD,SINGLE);
@@ -418,12 +418,12 @@ void moveScanner(){
   float prc_adj_horiz_pos = 1/scan_resolution;
   // Control the vertical motor based on the direction we need to travel
   switch(vert_motor_direction){
-    case 0: // Rotate servo upwards
-      vert_Stepper->step(prc_adj_vert_step,BACKWARD,SINGLE);
+    case 0: // Rotate servo 
+      vert_Stepper->step(prc_adj_vert_step,FORWARD,SINGLE);
       vert_position -= prc_adj_vert_pos;
       break;
     case 1: // Rotate servo downwards
-      vert_Stepper->step(prc_adj_vert_step,FORWARD,SINGLE);
+      vert_Stepper->step(prc_adj_vert_step,BACKWARD,SINGLE);
       vert_position += prc_adj_vert_pos;
       break;
   }
