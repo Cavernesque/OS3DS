@@ -281,13 +281,13 @@ void homingSequence(){
   limit_state = !digitalRead(limit_pin);
   // Increment the motor 1 degree in the FORWARD direction until we close the limit switch
   while(!limit_state){
-    vert_Stepper->step(20,FORWARD,SINGLE);  // TEST: Change to smaller step value
+    vert_Stepper->step(20,FORWARD,DOUBLE);  // TEST: Change to smaller step value
     delay(stepper_motor_cycle_delay);  // TEST: Change to smallest value possible, based on duty cycle
     limit_state = !digitalRead(limit_pin);
   }
   // Limit switch reached, go BACKWARD to top vertical angle
   int init_pos_steps = vert_deg_steps*highside_angle;  // TEST: Angle that scanner reaches after taking the steps
-  vert_Stepper->step(init_pos_steps,BACKWARD,SINGLE);
+  vert_Stepper->step(init_pos_steps,BACKWARD,DOUBLE);
   vert_position = highside_angle;
 }
 
@@ -305,16 +305,16 @@ void codeBJog(){
     // Each button press should correspond to 4 degrees of turn
     // TODO: This amount of steps should be configurable.
     case 117:  // 'u'
-      vert_Stepper->step(20,FORWARD,SINGLE);
+      vert_Stepper->step(20,FORWARD,DOUBLE);
       break;
     case 100:  // 'd'
-      vert_Stepper->step(20,BACKWARD,SINGLE);
+      vert_Stepper->step(20,BACKWARD,DOUBLE);
       break;
     case 108:  // 'l'
-      horiz_Stepper->step(80,FORWARD,SINGLE);
+      horiz_Stepper->step(80,BACKWARD,DOUBLE);
       break;
     case 114:  // 'r'
-      horiz_Stepper->step(80,BACKWARD,SINGLE);
+      horiz_Stepper->step(80,FORWARD,DOUBLE);
       break;
   }
 }
@@ -395,7 +395,7 @@ void codeCScan(){
     }
   }
   // Return to starting position after loop is finished, "anti-tangle"
-  horiz_Stepper->step((full_steps*(360/scan_angle)),BACKWARD,SINGLE); // Rotate horizontally clockwise
+  horiz_Stepper->step((full_steps*(scan_angle/360)),FORWARD,DOUBLE); // Rotate horizontally clockwise
   horiz_position = 0;
   // Scan is complete, pass control back to loop() and allow serial commands again.
   Serial.print("complete,");
@@ -422,16 +422,16 @@ void moveScanner(){
   // Control the vertical motor based on the direction we need to travel
   switch(vert_motor_direction){
     case 0: // Rotate servo 
-      vert_Stepper->step(prc_adj_vert_step,FORWARD,SINGLE);
+      vert_Stepper->step(prc_adj_vert_step,FORWARD,DOUBLE);
       vert_position -= prc_adj_vert_pos;
       break;
     case 1: // Rotate servo downwards
-      vert_Stepper->step(prc_adj_vert_step,BACKWARD,SINGLE);
+      vert_Stepper->step(prc_adj_vert_step,BACKWARD,DOUBLE);
       vert_position += prc_adj_vert_pos;
       break;
   }
   if((vert_position <= highside_angle) || (vert_position >= lowside_angle)){
-    horiz_Stepper->step(prc_adj_horiz_step,FORWARD,SINGLE); // Rotate horizontally anti-clockwise
+    horiz_Stepper->step(prc_adj_horiz_step,BACKWARD,DOUBLE); // Rotate horizontally anti-clockwise
     horiz_position += prc_adj_horiz_pos;
     vert_motor_direction = !vert_motor_direction; // Flip the vertical motor direction
     // Cycle the scanner line around the pattern
