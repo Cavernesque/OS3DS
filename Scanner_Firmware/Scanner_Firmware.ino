@@ -54,7 +54,6 @@ const int full_steps = 7342; // 7342 steps per full horizontal revolution of sca
 float horiz_position = 0; // Initialize horizontal position tracking variable
 float vert_position = 90; // Initialize vertical position tracking variable, will be set during homingSequence
 bool vert_motor_direction = true; // Vertical motor direction: False is up, True is down
-byte stepper_motor_cycle_delay = 10; // A parameter so we don't over-work the steppers. TEST: See what operating range is.
 
 // --LiDAR--
 // Default address of the LiDAR is 0x10 (DEC: 16)
@@ -282,7 +281,6 @@ void homingSequence(){
   // Increment the motor 1 degree in the FORWARD direction until we close the limit switch
   while(!limit_state){
     vert_Stepper->step(20,FORWARD,DOUBLE);  // TEST: Change to smaller step value
-    delay(stepper_motor_cycle_delay);  // TEST: Change to smallest value possible, based on duty cycle
     limit_state = !digitalRead(limit_pin);
   }
   // Limit switch reached, go BACKWARD to top vertical angle
@@ -356,12 +354,6 @@ void codeCScan(){
     }
     // Increment our point count, irrespective of data validity condition
     scan_points_acquired += 1;
-    // Give a delay to stay within motor short-cycle timing?
-    // TODO: Test if this is necessary! It's a big slowdown point for scans otherwise!
-    //       I've made it a parameter to make it easier to find.
-    delay(stepper_motor_cycle_delay);  // TEST: How necessary is this? How small can the delay be?
-    // Move the scanner to the next position.
-    moveScanner();
     /*  Push data
      *  If data validation is enabled, and the data is bad, loop and try reading data again. App will wait.
      *  Data frame is structured as:
@@ -389,17 +381,21 @@ void codeCScan(){
       Serial.print('\r');
       Serial.print('\n');
     }
+    // Move the scanner to the next position.
+    moveScanner();
     // Check to see if the scan has completed, set the flag if it is.
     if(scan_points_acquired >= anticipated_points){
       scan_complete = true;
     }
   }
   // Return to starting position after loop is finished, "anti-tangle"
-  horiz_Stepper->step((full_steps*(scan_angle/360)),FORWARD,DOUBLE); // Rotate horizontally clockwise
+  horiz_Stepper->step((full_steps*(horiz_position/360)),FORWARD,DOUBLE); // Rotate horizontally clockwise
   horiz_position = 0;
   // Scan is complete, pass control back to loop() and allow serial commands again.
   Serial.print("complete,");
   Serial.println(validation_fails);
+  horiz_Stepper->release();
+  vert_Stepper->release();
 }
 
 void moveScanner(){
@@ -408,32 +404,39 @@ void moveScanner(){
    *  When method returns true, scan is complete.
    *  (Scan resolution : Vertical points per horizontal position)
    *  (2.0 : 180), (1.0 : 90), (0.5 : 45), (0.25 : 22), (0.1 : 9)
+   *  Scan resolution : Horizontal degrees in full rotation
+   *  (2.0 : 720), (1.0 : 360), (0.5 : 180), (0.25 : 90), (0.1 : 36)
+   * INFO: There is theoretically an available "extremely fine" scan where we take 11 data points per degree
+   *       This would mean 990 points per horizontal degree, and 3960 horizontal points
+   *       A whopping total of 3.92 MILLION points!
    */
   int prc_adj_vert_step = vert_deg_steps/scan_resolution;
-  float prc_adj_vert_pos = 1/scan_resolution;
-  // TODO: Maybe separate out the horizontal and vertical precisions?
-  // Scan resolution : Horizontal degrees in full rotation
-  // 2.0 : 720, 1.0 : 360, 0.5 : 180, 0.25 : 90, 0.1 : 36
-  // TODO: There is theoretically an available "extremely fine" scan where we take 11 data points per degree
-  // This would mean 990 points per horizontal degree, and 3960 horizontal points
-  // A whopping total of 3.92 MILLION points!
+  float prc_adj_vert_pos = prc_adj_vert_step*(1/vert_deg_steps);
   int prc_adj_horiz_step = horiz_deg_steps/scan_resolution;
-  float prc_adj_horiz_pos = 1/scan_resolution;
+  float prc_adj_horiz_pos = prc_adj_horiz_step*(1/horiz_deg_steps);
   // Control the vertical motor based on the direction we need to travel
   switch(vert_motor_direction){
-    case 0: // Rotate servo 
-      vert_Stepper->step(prc_adj_vert_step,FORWARD,DOUBLE);
-      vert_position -= prc_adj_vert_pos;
-      break;
-    case 1: // Rotate servo downwards
-      vert_Stepper->step(prc_adj_vert_step,BACKWARD,DOUBLE);
-      vert_position += prc_adj_vert_pos;
-      break;
+  case 0: // Rotate servo upwards
+    vert_Stepper->step(prc_adj_vert_step,FORWARD,DOUBLE);
+    vert_position -= prc_adj_vert_pos;
+    break;
+  case 1: // Rotate servo downwards
+    vert_Stepper->step(prc_adj_vert_step,BACKWARD,DOUBLE);
+    vert_position += prc_adj_vert_pos;
+    break;
   }
   if((vert_position <= highside_angle) || (vert_position >= lowside_angle)){
     horiz_Stepper->step(prc_adj_horiz_step,BACKWARD,DOUBLE); // Rotate horizontally anti-clockwise
     horiz_position += prc_adj_horiz_pos;
     vert_motor_direction = !vert_motor_direction; // Flip the vertical motor direction
+    switch(vert_motor_direction){
+      case 0: // Rotate servo upwards to compensate for backlash
+        vert_Stepper->step(24,FORWARD,DOUBLE);
+        break;
+      case 1: // Rotate servo downwards to compensate for backlash
+        vert_Stepper->step(24,BACKWARD,DOUBLE);
+        break;
+    }
     // Cycle the scanner line around the pattern
     if(scanner_current_line >= 8){
       scanner_current_line = 1;
