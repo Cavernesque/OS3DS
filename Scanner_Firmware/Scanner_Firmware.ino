@@ -42,6 +42,7 @@ byte scanner_current_line = 1;  // Tracks current line to adjust for point inter
 unsigned int scan_points_acquired = 0;  // Tracks how many points have currently been scanned.
 unsigned long anticipated_points = 0;  // Calculated number of points scan parameters should yield.
 unsigned int validation_fails = 0;  // Tracks amount of failed transmissions from sensors
+unsigned long vertical_step_cnt = 0;  // Tracks the number of steps to travel back to the top
 
 // ----External Devices----
 // --Steppers--
@@ -163,39 +164,7 @@ void codeAConfigure(){
       delay(10);  // Wait minimum time for LiDAR response
       break;
   }
-  // Calculate the number of points we should be scanning
-  if(scan_point_trimming){
-    unsigned long point_count_lines = 0;
-    unsigned int longitude_lines_in_scan = (unsigned int)(scan_angle*scan_resolution);
-    unsigned long longitude_1_pts = (lowside_angle-highside_angle)*scan_resolution;
-    unsigned long longitude_246_pts = 90*scan_resolution;
-    unsigned long longitude_35_pts = 120*scan_resolution;
-    // Tally the round number of scan longitudinal lines
-    anticipated_points += ((longitude_1_pts)+(3*longitude_246_pts)+(2*longitude_35_pts))*(longitude_lines_in_scan/6);
-    byte remainder = longitude_lines_in_scan % 6;
-    // I dislike this algorithm, but it should work for now.
-    switch(remainder){
-      case 1:
-        anticipated_points += longitude_1_pts;
-        break;
-      case 2:
-        anticipated_points += longitude_1_pts + longitude_246_pts;
-        break;
-      case 3:
-        anticipated_points += longitude_1_pts + longitude_246_pts + longitude_35_pts;
-        break;
-      case 4:
-        anticipated_points += longitude_1_pts + (2*longitude_246_pts) + longitude_35_pts;
-        break;
-      case 5:
-        anticipated_points += longitude_1_pts + (2*longitude_246_pts) + (2*longitude_35_pts);
-        break;
-    }
-  }
-  // If point trimming is disabled, multiply the full line of longitude with the horizontal scan angle.
-  else{
-    anticipated_points = ((lowside_angle-highside_angle)*scan_resolution)*(scan_angle*scan_resolution);
-  }
+  anticipated_points = calcScanPoints();
   homingSequence();
 }
 
@@ -287,6 +256,26 @@ void homingSequence(){
   int init_pos_steps = vert_deg_steps*highside_angle;  // TEST: Angle that scanner reaches after taking the steps
   vert_Stepper->step(init_pos_steps,BACKWARD,DOUBLE);
   vert_position = highside_angle;
+}
+
+unsigned long calcScanPoints(){
+  // Calculate the number of points we should be scanning
+  unsigned long points = 0;
+  // TODO: Re-introduce point trimming calculation
+  // Steps : Resolution
+  // (1 : 4.0), (2 : 2.0), (5 : 1.0), (11 : 0.5), (22 : 0.25), (56 : 0.1)
+  unsigned int prc_adj_vert_step = vert_deg_steps/scan_resolution;
+  // (4 : 4.0), (10 : 2.0), (20 : 1.0), (40 : 0.5), (80 : 0.25), (200 : 0.1)
+  unsigned int prc_adj_horiz_step = horiz_deg_steps/scan_resolution;
+  // Position change (Degrees) : Resolution
+  // (0.1767 : 4.0), (0.3535 : 2.0), (0.8837 : 1.0), (1.944 : 0.5), (3.888 : 0.25), (9.897 : 0.1)
+  float prc_adj_vert_pos = prc_adj_vert_step*(1/vert_deg_steps);
+  // (0.1991 : 4.0), (0.4978 : 2.0), (0.9957 : 1.0), (1.991 : 0.5), (3.983 : 0.25), (9.957 : 0.1)
+  float prc_adj_horiz_pos = prc_adj_horiz_step*(1/horiz_deg_steps);
+  unsigned long vertical_positions = ((lowside_angle-highside_angle)/prc_adj_vert_pos) + 1; // Add 1 to ensure we go over the angle limit
+  unsigned long horizontal_positions = (scan_angle/prc_adj_horiz_pos) + 1; // Add 1 to ensure we go over the angle limit
+  points = vertical_positions*horizontal_positions;
+  return points;
 }
 
 /*****************
@@ -410,33 +399,34 @@ void moveScanner(){
    *       This would mean 990 points per horizontal degree, and 3960 horizontal points
    *       A whopping total of 3.92 MILLION points!
    */
+  // Steps : Resolution
+  // (1 : 4.0), (2 : 2.0), (5 : 1.0), (11 : 0.5), (22 : 0.25), (56 : 0.1)
   int prc_adj_vert_step = vert_deg_steps/scan_resolution;
-  float prc_adj_vert_pos = prc_adj_vert_step*(1/vert_deg_steps);
+  // (4 : 4.0), (10 : 2.0), (20 : 1.0), (40 : 0.5), (80 : 0.25), (200 : 0.1)
   int prc_adj_horiz_step = horiz_deg_steps/scan_resolution;
+  // Position change (Degrees) : Resolution
+  // (0.1767 : 4.0), (0.3535 : 2.0), (0.8837 : 1.0), (1.944 : 0.5), (3.888 : 0.25), (9.897 : 0.1)
+  float prc_adj_vert_pos = prc_adj_vert_step*(1/vert_deg_steps);
+  // (0.1991 : 4.0), (0.4978 : 2.0), (0.9957 : 1.0), (1.991 : 0.5), (3.983 : 0.25), (9.957 : 0.1)
   float prc_adj_horiz_pos = prc_adj_horiz_step*(1/horiz_deg_steps);
   // Control the vertical motor based on the direction we need to travel
   switch(vert_motor_direction){
-  case 0: // Rotate servo upwards
-    vert_Stepper->step(prc_adj_vert_step,FORWARD,DOUBLE);
-    vert_position -= prc_adj_vert_pos;
-    break;
-  case 1: // Rotate servo downwards
-    vert_Stepper->step(prc_adj_vert_step,BACKWARD,DOUBLE);
-    vert_position += prc_adj_vert_pos;
-    break;
+    case 0: // Rotate servo upwards
+      vert_Stepper->step(vertical_step_cnt,FORWARD,DOUBLE);
+      vert_position = highside_angle;
+      vertical_step_cnt = 0;
+      vert_motor_direction = !vert_motor_direction;
+      break;
+    case 1: // Rotate servo downwards
+      vert_Stepper->step(prc_adj_vert_step,BACKWARD,DOUBLE);
+      vert_position += prc_adj_vert_pos;
+      vertical_step_cnt += prc_adj_vert_step;
+      break;
   }
-  if((vert_position <= highside_angle) || (vert_position >= lowside_angle)){
+  if(vert_position >= lowside_angle){
     horiz_Stepper->step(prc_adj_horiz_step,BACKWARD,DOUBLE); // Rotate horizontally anti-clockwise
     horiz_position += prc_adj_horiz_pos;
-    vert_motor_direction = !vert_motor_direction; // Flip the vertical motor direction
-    switch(vert_motor_direction){
-      case 0: // Rotate servo upwards to compensate for backlash
-        vert_Stepper->step(24,FORWARD,DOUBLE);
-        break;
-      case 1: // Rotate servo downwards to compensate for backlash
-        vert_Stepper->step(24,BACKWARD,DOUBLE);
-        break;
-    }
+    vert_motor_direction = !vert_motor_direction;
     // Cycle the scanner line around the pattern
     if(scanner_current_line >= 8){
       scanner_current_line = 1;

@@ -266,7 +266,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         None.
 
         """
-        pos_change_time = 0.0213  # Time is in seconds
+        pos_change_time = 0.0558  # Time is in seconds
         vertical_angle = self.lowAngleBox.value() - self.highAngleBox.value()
         scan_angles = [360, 270, 180, 135, 90, 45, 22, 10]
         angle = scan_angles[self.angleBox.currentIndex()]
