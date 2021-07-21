@@ -303,7 +303,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         options = QtWidgets.QFileDialog.Options()
         default_fill = ""
-        if self.sensorBox.currentIndex:
+        if self.sensorBox.currentIndex == 1:
             sensortext = "LiDAR"
         else:
             sensortext = "Sonar"
@@ -555,7 +555,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 # Strip CRLF
                 data = data.decode('utf8')[:-2]
                 parsed = data.split(",")
-                print(repr(parsed))
+                print(repr(parsed) + " parsed")
                 if parsed[0] == "complete":
                     scan_complete = True
                     valid_fails = int(parsed[1])
@@ -602,6 +602,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 intensity.append(0)
                 theta.append(0)
                 phi.append(0)
+                print("Value error!")
                 pass
             else:
                 # If the scan got aborted by the user, break out from scan

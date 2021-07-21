@@ -330,6 +330,12 @@ void codeCScan(){
           intensity = 0;
           data_state = true; // Pass a true data state so program proceeds.
         }
+        // Otherwise, we're using data validation and need to continue polling sensor until we get a good value
+        else{
+          while(!data_state){
+            data_state = readLidar();
+          }
+        }
       }
       // Sonar routine
       else if((!sensor_type) && (!scan_complete)){
@@ -338,6 +344,12 @@ void codeCScan(){
         if((!scan_data_validation) && (!data_state)){
           distance = 0; // Sonar doesn't yield intensity.
           data_state = true; // Pass a true data state so program proceeds.
+        }
+        // Otherwise, we're using data validation and need to continue polling sensor until we get a good value
+        else{
+          while(!data_state){
+            data_state = readSonar();
+          }
         }
       }
     }
@@ -382,7 +394,12 @@ void codeCScan(){
   horiz_position = 0;
   // Scan is complete, pass control back to loop() and allow serial commands again.
   Serial.print("complete,");
-  Serial.println(validation_fails);
+  if(scan_data_validation){
+    Serial.println(validation_fails);
+  }
+  else{
+    Serial.println("0");
+  }
   horiz_Stepper->release();
   vert_Stepper->release();
 }
@@ -518,8 +535,8 @@ bool readSonar(){
   // When data is read successfully, write it to the global variable
   distance = 0;
   word incoming_checksum = 0;
-  unsigned long out_checksum = 0;
   byte frame[2];
+  byte discard = 0;
   if(sonar_Serial.available()>=4){
     byte incoming_byte = byte(sonar_Serial.read());
     if(incoming_byte == 255){
@@ -529,6 +546,12 @@ bool readSonar(){
       distance = frame[0] << 8;
       distance += frame[1];
       incoming_checksum += frame[0] + frame[1] + 255;
+      // Leave time for another piece of data to be generated
+      delay(300);
+      // Discard any data in the serial buffer that accumulated after we got the data frame
+      while(sonar_Serial.available()>0){
+        discard = byte(sonar_Serial.read());
+      }
       // If checksum is valid and the data is not the maximum value (likely erroneous), data is good.
       if(lowByte(incoming_checksum) == frame[2]){
         return true;
@@ -537,9 +560,9 @@ bool readSonar(){
         validation_fails += 1;
         return false;
       }
-      return false; // If we've gotten here, something has gone wrong. Discard the data.
     }
   }
+  return false; // If we've gotten here, something has gone wrong. Discard the data.
 }
 
 bool scanPoint(){
