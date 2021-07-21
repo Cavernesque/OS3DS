@@ -100,6 +100,7 @@ void serialEvent(){
    *  A: Configure scanner
    *  B: Jog motors
    *  C: Scan
+   *  D: Rangefind
    *  serialEvent is only called at the end of loop(), so we don't need to worry about
    *  potentially interfering with a configuration frame once in that function.
    */
@@ -113,6 +114,9 @@ void serialEvent(){
       break;
     case 67:
       codeCScan();
+      break;
+    case 68:
+      codeDRangefind();
       break;
   }
 }
@@ -607,6 +611,56 @@ unsigned long genChecksum(){
   checksum += (distance + intensity + (int)horiz_position + (int)vert_position);
   return checksum;
 }
+
+
+/***********************
+ Rangefind (D) functions
+***********************/
+
+void codeDRangefind(){
+  delay(100);
+  char sensor_code = (char)Serial.read();
+  bool sensor_read = false;
+  byte discard = 0;
+  switch(sensor_code){
+    case 48: // Sonar
+      pinMode(2,INPUT);
+      pinMode(3,OUTPUT);
+      sonar_Serial.begin(9600);
+      sonar_Serial.listen();
+      delay(50);
+      while(!sensor_read){
+        sensor_read = readSonar();
+      }
+      sonar_Serial.end();
+      break;
+    case 49: // Lidar
+      // Begin takes the argument of the Slave address for Arduino to take
+      // If no address is given, it joins the I2C bus as a Master
+      Wire.begin();
+      // Set the wire clock to Fast mode, 400kbps
+      Wire.setClock(400000);
+      // Set up I2C communication mode to LiDAR
+      Wire.beginTransmission(lid_addr);
+      // Write the command to change the measurement unit to mm instead of cm
+      // HEX: {5A, 05, 05, 06, 6A}     DEC: {90, 5, 5, 6, 106}
+      byte message[] = {90, 5, 5, 6, 106};
+      Wire.write(message,5);
+      Wire.endTransmission();
+      delay(50);  // Wait some time before writing the next command
+      while(!sensor_read){
+        sensor_read = readLidar();
+      }
+      Wire.end();
+      break;
+  }
+  Serial.println(distance);
+  distance = 0;
+}
+
+/*****
+ Loop!
+*****/
 
 void loop() {
 }

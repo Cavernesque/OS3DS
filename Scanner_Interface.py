@@ -119,6 +119,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.jogscannerRight.clicked.connect(
                 lambda: self.jogDirection("right"))
 
+        # Connect the rangefind button to the rangefind method
+        self.rangefindButton.clicked.connect(self.rangeFind)
+
     """
     --------------------------------------------------------------
                 File menu methods
@@ -379,6 +382,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if direction == "right":
             self.arduino.write(bytes("r", encoding="ASCII"))
 
+    def rangeFind(self):
+        """Get the distance value from currently selected sensor."""
+        self.arduino.write(bytes("D", encoding="ASCII"))
+        sleep(0.05)
+        sensor = str(self.sensorBox.currentIndex())
+        self.arduino.write(bytes(sensor, encoding="ASCII"))
+        sleep(0.1)
+        response = self.arduino.readline()
+        response = repr(response.decode(encoding='UTF-8'))
+        self.distanceBox.setPlainText(response + " mm")
+        return
+
     """
     --------------------------------------------------------------
                 Connection and communication methods
@@ -409,6 +424,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 sleep(1)
                 self.jogMode(True)
                 self.scanButton.setEnabled(True)
+                self.rangefindButton.setEnabled(True)
             except serial.SerialException:
                 self.connectFdbkLabel.setText(
                     """Error: Could not connect to scanner.""")

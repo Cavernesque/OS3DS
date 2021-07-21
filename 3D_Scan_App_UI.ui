@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>884</width>
+    <width>889</width>
     <height>650</height>
    </rect>
   </property>
@@ -896,7 +896,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>760</x>
-      <y>120</y>
+      <y>100</y>
       <width>51</width>
       <height>51</height>
      </rect>
@@ -915,7 +915,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>710</x>
-      <y>70</y>
+      <y>50</y>
       <width>151</width>
       <height>41</height>
      </rect>
@@ -936,7 +936,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>810</x>
-      <y>170</y>
+      <y>150</y>
       <width>51</width>
       <height>51</height>
      </rect>
@@ -958,7 +958,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>710</x>
-      <y>170</y>
+      <y>150</y>
       <width>51</width>
       <height>51</height>
      </rect>
@@ -980,7 +980,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>760</x>
-      <y>220</y>
+      <y>200</y>
       <width>51</width>
       <height>51</height>
      </rect>
@@ -999,7 +999,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>710</x>
-      <y>30</y>
+      <y>10</y>
       <width>151</width>
       <height>31</height>
      </rect>
@@ -1017,7 +1017,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>700</x>
-      <y>60</y>
+      <y>40</y>
       <width>161</width>
       <height>20</height>
      </rect>
@@ -1167,13 +1167,148 @@ p, li { white-space: pre-wrap; }
      <string>Note: Enabling this setting will decrease total points scanned.</string>
     </property>
    </widget>
+   <widget class="QLabel" name="rangefindLabel">
+    <property name="geometry">
+     <rect>
+      <x>710</x>
+      <y>270</y>
+      <width>151</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>14</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Rangefinder</string>
+    </property>
+   </widget>
+   <widget class="QPlainTextEdit" name="distanceBox">
+    <property name="geometry">
+     <rect>
+      <x>710</x>
+      <y>360</y>
+      <width>121</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+    <property name="verticalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
+    <property name="lineWrapMode">
+     <enum>QPlainTextEdit::NoWrap</enum>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+    <property name="plainText">
+     <string>0 mm</string>
+    </property>
+    <property name="textInteractionFlags">
+     <set>Qt::NoTextInteraction</set>
+    </property>
+   </widget>
+   <widget class="Line" name="line_13">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>0</y>
+      <width>20</width>
+      <height>401</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="Line" name="line_14">
+    <property name="geometry">
+     <rect>
+      <x>710</x>
+      <y>300</y>
+      <width>161</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="distanceLabel">
+    <property name="geometry">
+     <rect>
+      <x>710</x>
+      <y>330</y>
+      <width>121</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="cursor">
+     <cursorShape>WhatsThisCursor</cursorShape>
+    </property>
+    <property name="toolTip">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The distance read by the configured sensor when the &amp;quot;GET&amp;quot; button is pressed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="text">
+     <string>Current Distance</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="rangefindButton">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>840</x>
+      <y>360</y>
+      <width>41</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="statusTip">
+     <string>Browse for file name</string>
+    </property>
+    <property name="text">
+     <string>GET</string>
+    </property>
+    <property name="checkable">
+     <bool>false</bool>
+    </property>
+    <property name="toolButtonStyle">
+     <enum>Qt::ToolButtonTextOnly</enum>
+    </property>
+    <property name="arrowType">
+     <enum>Qt::NoArrow</enum>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>884</width>
+     <width>889</width>
      <height>21</height>
     </rect>
    </property>
