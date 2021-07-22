@@ -5,9 +5,9 @@ block_cipher = None
 
 
 a = Analysis(['Scanner_Interface.py'],
-             pathex=['C:\\PROJECTS\\Git\\OS3DS'],
+             pathex=['F:\\PROJECTS\\OS3DS\\OS3DS'],
              binaries=[],
-             datas=[('C:\\PROJECTS\\Git\\OS3DS\\3D_Scan_App_UI.ui', '.'),('C:\\PROJECTS\\Git\\OS3DS\\radaricon.png', '.')],
+             datas=[('F:\\PROJECTS\\OS3DS\\OS3DS\\3D_Scan_App_UI.ui', '.'),('F:\\PROJECTS\\OS3DS\\OS3DS\\radaricon.png', '.')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
