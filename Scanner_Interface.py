@@ -306,7 +306,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         options = QtWidgets.QFileDialog.Options()
         default_fill = ""
-        if self.sensorBox.currentIndex == 1:
+        if self.sensorBox.currentIndex() == 1:
             sensortext = "LiDAR"
         else:
             sensortext = "Sonar"
