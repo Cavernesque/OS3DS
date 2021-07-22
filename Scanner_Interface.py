@@ -391,7 +391,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         sleep(0.1)
         response = self.arduino.readline()
         response = repr(response.decode(encoding='UTF-8'))
-        self.distanceBox.setPlainText(response + " mm")
+        self.distanceBox.setPlainText(response[1:-5] + " mm")
         return
 
     """
