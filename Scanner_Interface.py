@@ -1,4 +1,4 @@
-"""A module that creates the GUI application for the Open Source Scanner.
+"""A module that creates the GUI application for the Open-Source Scanner.
 
 Open-Source 3D Scanner Project
 Created by: Darren Paetz, Matt Kantor, Dr. Philip Mees
