@@ -3,12 +3,14 @@
 The Open Source 3D scanner is a project with the aims to develop a low-cost, open source hardware and software 3D LiDAR scanner.
 This project is an academic research project with MacEwan University, with funding from the Office of Research Services Undergraduate Student Research Initiative Grant (USRI).
 
-#### The Project Team
+### The Project Team
 
 The project team consists of:
-Darren Paetz - Software and Electrical design
-Matt Kantor - Mechanical and Software design
-Dr. Philip Mees - Project Mentor
+
+- Darren Paetz - Software and Electrical design
+- Matt Kantor - Mechanical and Software design
+- Dr. Philip Mees - Project Mentor
+- Dr. Jeffrey Davis - Project Mentor
 
 ![The OS3DS](https://github.com/Cavernesque/OS3DS/blob/main/OS3DS.png "The OS3DS")
 
