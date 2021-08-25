@@ -10,11 +10,17 @@ Darren Paetz - Software and Electrical design
 Matt Kantor - Mechanical and Software design
 Dr. Philip Mees - Project Mentor
 
+![The OS3DS](https://github.com/Cavernesque/OS3DS/blob/main/OS3DS.png "The OS3DS")
+
 ## The Hardware
 
 The OS3DS has several key hardware components.
 
 It has an Arduino Uno for I/O management, the Benewake TF-02 Pro/Mini Plus for LiDAR data acquisition, 2 5V 28BYJ-48 Stepper motors (64:1) to control its position, and has a 3D printed (PLA and PETG) enclosure that allows proper cable management and tripod mounting.
+
+All of the 3D models for this project can be found in the Electrical_Mechanical folder.
+
+An electrical schematic is included for reference in construction.
 
 Full details of the hardware design can be found in the Design Report, which is located in the Design_Report folder.
 
@@ -27,7 +33,10 @@ Scanner parameters are fully software configurable from the included application
 The included Python module provides a GUI that you can use to send configuration data to the scanner and also then read the scan data back from the Arduino. It saves scan information in the platform-agnostic and ASTM standardized .E57 format, as well as to a file in ASCII format for manipulation and direct viewing.
 
 ##### Python Dependencies
-numpy
-pye57
-serial
-PyQt5
+- numpy
+- pye57
+- serial
+- PyQt5
+
+## Contribution
+Anyone and everyone is free and encouraged to build upon the work this project has started! If any issues are found, please create an issue so that it can be seen by the project owners and the community.
