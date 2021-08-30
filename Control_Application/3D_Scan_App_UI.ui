@@ -1332,8 +1332,6 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionAbout_OS3DS"/>
      <addaction name="actionAbout_Qt"/>
     </widget>
-    <addaction name="actionUser_s_Guide"/>
-    <addaction name="separator"/>
     <addaction name="menuAbout"/>
     <addaction name="actionLicense"/>
    </widget>
